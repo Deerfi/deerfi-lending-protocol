@@ -2,6 +2,7 @@ pragma solidity ^0.5.16;
 
 import "./CTokenInterfaces.sol";
 import "./SafeMath.sol";
+import "./Math.sol";
 import './IUniswapV2Pair.sol';
 import './EIP20Interface.sol';
 
@@ -227,13 +228,17 @@ contract ChainlinkPriceOracleProxy is Ownable, PriceOracle {
 
         if (config.chainlinkPriceBase == 3) {
             IUniswapV2Pair pair = IUniswapV2Pair(config.chainlinkAggregatorAddress);
+            uint256 root;
+            {
             (uint112 reserve0, uint112 reserve1,) = pair.getReserves();
-            uint256 decimals = 10**uint256(pair.decimals());
             address token0 = pair.token0();
-            uint256 price0 = reserve0.mul(decimals).mul(getTokenPrice(token0)).div(10**uint256(EIP20Interface(token0).decimals()));
             address token1 = pair.token1();
-            uint256 price1 = reserve1.mul(decimals).mul(getTokenPrice(token1)).div(10**uint256(EIP20Interface(token1).decimals()));
-            uint256 underlyingPrice = SafeMath.min(price0, price1).div(pair.totalSupply()).mul(2);
+            uint256 price01 = getTokenPrice(token0).mul(getTokenPrice(token1));
+            uint256 decimals01 = 10**uint256(EIP20Interface(token0).decimals()).mul(10**uint256(EIP20Interface(token1).decimals()));
+            root = Math.sqrt(price01.mul(reserve0).mul(reserve1).div(decimals01));
+            }
+            uint256 decimals = 10**uint256(pair.decimals());
+            uint256 underlyingPrice = root.mul(decimals).div(pair.totalSupply()).mul(2);
             require(underlyingPrice > 0, "Underlying price invalid");
             return underlyingPrice;
         } else {
