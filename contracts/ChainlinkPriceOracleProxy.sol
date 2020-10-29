@@ -233,9 +233,11 @@ contract ChainlinkPriceOracleProxy is Ownable, PriceOracle {
             (uint112 reserve0, uint112 reserve1,) = pair.getReserves();
             address token0 = pair.token0();
             address token1 = pair.token1();
-            uint256 price01 = getTokenPrice(token0).mul(getTokenPrice(token1));
-            uint256 decimals01 = 10**uint256(EIP20Interface(token0).decimals()).mul(10**uint256(EIP20Interface(token1).decimals()));
-            root = Math.sqrt(price01.mul(reserve0).mul(reserve1).div(decimals01));
+            uint256 price0 = getTokenPrice(token0);
+            uint256 price1 = getTokenPrice(token1);
+            uint256 decimals0 = 10**uint256(EIP20Interface(token0).decimals());
+            uint256 decimals1 = 10**uint256(EIP20Interface(token1).decimals());
+            root = Math.sqrt(price0.mul(price1).div(decimals0).mul(reserve0).div(decimals1).mul(reserve1));
             }
             uint256 decimals = 10**uint256(pair.decimals());
             uint256 underlyingPrice = root.mul(decimals).div(pair.totalSupply()).mul(2);
