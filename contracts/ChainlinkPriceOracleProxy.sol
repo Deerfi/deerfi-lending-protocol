@@ -188,7 +188,7 @@ contract ChainlinkPriceOracleProxy is Ownable, PriceOracle {
         uint256 underlyingPrice;
 
         if (config.chainlinkPriceBase == 1) {
-            underlyingPrice = uint256(chainlinkPrice).mul(1e18).div(
+            underlyingPrice = uint256(chainlinkPrice).mul(1e28).div(
                 10**config.underlyingTokenDecimals
             );
         } else if (config.chainlinkPriceBase == 2) {
@@ -235,12 +235,9 @@ contract ChainlinkPriceOracleProxy is Ownable, PriceOracle {
             address token1 = pair.token1();
             uint256 price0 = getTokenPrice(token0);
             uint256 price1 = getTokenPrice(token1);
-            uint256 decimals0 = 10**uint256(EIP20Interface(token0).decimals());
-            uint256 decimals1 = 10**uint256(EIP20Interface(token1).decimals());
-            root = Math.sqrt(price0.mul(price1).div(decimals0).mul(reserve0).div(decimals1).mul(reserve1));
+            root = Math.sqrt(price0).mul(Math.sqrt(price1)).mul(Math.sqrt(reserve0.mul(reserve1)));
             }
-            uint256 decimals = 10**uint256(pair.decimals());
-            uint256 underlyingPrice = root.mul(decimals).div(pair.totalSupply()).mul(2);
+            uint256 underlyingPrice = root.div(pair.totalSupply()).mul(2);
             require(underlyingPrice > 0, "Underlying price invalid");
             return underlyingPrice;
         } else {
