@@ -153,9 +153,6 @@ contract ChainlinkPriceOracleProxy is Ownable, PriceOracle {
     using SafeMath for uint256;
     using SafeMath for uint112;
 
-    /// @notice Indicator that this is a PriceOracle contract (for inspection)
-    bool public constant isPriceOracle = true;
-
     address public ethUsdChainlinkAggregatorAddress;
 
     struct TokenConfig {
@@ -219,12 +216,13 @@ contract ChainlinkPriceOracleProxy is Ownable, PriceOracle {
      * @return Price denominated in USD, with 18 decimals, for the given cToken address. Comptroller needs prices in the format: ${raw price} * 1e(36 - baseUnit)
      */
     function getUnderlyingPrice(CTokenInterface cToken)
-        public
+        external
         view
         returns (uint256)
     {
         address cTokenAddress = address(cToken);
         TokenConfig memory config = tokenConfig[cTokenAddress];
+        require(config.chainlinkPriceBase != 0, "Invalid config");
 
         if (config.chainlinkPriceBase == 3) {
             IUniswapV2Pair pair = IUniswapV2Pair(config.chainlinkAggregatorAddress);
@@ -281,8 +279,8 @@ contract ChainlinkPriceOracleProxy is Ownable, PriceOracle {
     }
 
     event TokenConfigUpdated(
-        address cTokenAddress,
-        address chainlinkAggregatorAddress,
+        address indexed cTokenAddress,
+        address indexed chainlinkAggregatorAddress,
         uint256 chainlinkPriceBase,
         uint256 underlyingTokenDecimals
     );
